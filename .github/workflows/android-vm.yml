@@ -93,8 +93,8 @@ jobs:
             echo "Enabling 'Pointer Location' (Visual Coordinates)..."
             adb shell settings put system pointer_location 1
             
-            echo "Installing Smart AutoClicker (v3.4.0)..."
-            curl -L -o autoclicker.apk "https://github.com/Nain57/Smart-AutoClicker/releases/download/v3.4.0/smartautoclicker-fDroid-release.apk"
+            echo "Installing Smart AutoClicker (Latest via SourceForge)..."
+            curl -L -o autoclicker.apk "https://sourceforge.net/projects/smartautoclicker/files/latest/download"
             adb install autoclicker.apk || echo "AutoClicker Install Failed"
             
             echo "=========================================================="
