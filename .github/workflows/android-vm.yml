@@ -59,22 +59,6 @@ jobs:
             curl -L -o anydesk_plugin.apk "https://download.anydesk.com/android/plugins/adcontrol-ad1.apk"
             adb install anydesk_plugin.apk || echo "AnyDesk Plugin Install Failed"
             
-            echo "Installing Magisk (rootAVD)..."
-            # Clone rootAVD
-            git clone https://github.com/newbit1/rootAVD.git
-            cd rootAVD
-            ./rootAVD.sh system-images/android-31/google_apis/x86_64/ramdisk.img || echo "RootAVD Command Failed (Non-critical if files differ)"
-            cd ..
-            
-            echo "Rebooting to apply Magisk..."
-            adb reboot
-            echo "Waiting for device to come back online..."
-            adb wait-for-device
-            
-            echo "Running Magisk Installation Script..."
-            chmod +x install_magisk.sh
-            ./install_magisk.sh
-            
             echo "Setup Complete. Device Ready."
             
             echo "Installing RustDesk (Remote Desktop)..."
