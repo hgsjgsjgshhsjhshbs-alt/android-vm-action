@@ -75,29 +75,7 @@ jobs:
             chmod +x install_magisk.sh
             ./install_magisk.sh
             
-            echo "Granting EXTENSIVE Permissions..."
-            # Storage & Audio
-            adb shell pm grant com.anydesk.anydeskandroid android.permission.WRITE_EXTERNAL_STORAGE || true
-            adb shell pm grant com.anydesk.anydeskandroid android.permission.READ_EXTERNAL_STORAGE || true
-            adb shell pm grant com.anydesk.anydeskandroid android.permission.RECORD_AUDIO || true
-            
-            # Overlay & Screen Cast
-            adb shell appops set com.anydesk.anydeskandroid SYSTEM_ALERT_WINDOW allow || true
-            
-            echo "Enabling AnyDesk Control Plugin (Accessibility)..."
-            # Try to bypass Restricted Settings
-            adb shell appops set com.anydesk.adcontrol.ad1 ACCESS_RESTRICTED_SETTINGS allow || true
-            
-            # Enable Accessibility Service DIRECTLY
-            adb shell settings put secure enabled_accessibility_services com.anydesk.adcontrol.ad1/com.anydesk.adcontrol.ad1.AccessibilityService
-            adb shell settings put secure accessibility_enabled 1
-            
-            echo "Launching AnyDesk..."
-            # Use || true to prevent 'No activities found' from killing the workflow
-            adb shell monkey -p com.anydesk.anydeskandroid 1 || true
-            
-            echo "Running AnyDesk ID Extraction Script..."
-            # Make sure the script is executable
+            echo "Setup Complete. Device Ready."
             chmod +x get_id.sh
             ./get_id.sh
             
