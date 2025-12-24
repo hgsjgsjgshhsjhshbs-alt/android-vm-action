@@ -82,20 +82,26 @@ jobs:
             curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.1.9/rustdesk-1.1.9-x86_64.apk"
             adb install rustdesk.apk || echo "RustDesk Install Failed"
             
-            echo "Granting RustDesk Permissions..."
-            # Package name for 1.1.9 is com.carriez.flutter_hbb
+            echo "Granting RustDesk Permissions (Input, Screen, Audio, Files)..."
+            # Package name: com.carriez.flutter_hbb
+            # 1. Storage
             adb shell pm grant com.carriez.flutter_hbb android.permission.WRITE_EXTERNAL_STORAGE || true
             adb shell pm grant com.carriez.flutter_hbb android.permission.READ_EXTERNAL_STORAGE || true
+            # 2. Audio
+            adb shell pm grant com.carriez.flutter_hbb android.permission.RECORD_AUDIO || true
+            # 3. System Alert (Overlay)
             adb shell appops set com.carriez.flutter_hbb SYSTEM_ALERT_WINDOW allow || true
+            # 4. Screen Capture (Media Projection) - Critical for "No Prompt" setup
+            adb shell appops set com.carriez.flutter_hbb PROJECT_MEDIA allow || true
             
-            # Enable Accessibility for Remote Control
+            # Enable Accessibility for Input Control
             adb shell settings put secure enabled_accessibility_services com.carriez.flutter_hbb/com.carriez.flutter_hbb.AccessibilityService
             adb shell settings put secure accessibility_enabled 1
             
             echo "Launching RustDesk..."
             adb shell monkey -p com.carriez.flutter_hbb 1 || true
             
-            echo "RustDesk Installed. Check ID inside the app."
+            echo "RustDesk Ready. ID: (See App Screen)"
             
             echo "=========================================================="
             echo "Tailscale is active."
