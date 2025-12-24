@@ -89,7 +89,25 @@ jobs:
             
             echo "Launching RustDesk to generate ID..."
             adb shell monkey -p com.rustdesk.rustdesk 1 || true
-            sleep 20
+            sleep 10
+            
+            echo "Attempting Auto-Click on 'Start Service'..."
+            # Assuming 1080x1920 Screen. "Start Service" is usually top-center.
+            # Tap Center-Top area
+            adb shell input tap 540 500  # Coordinate Estimate 1
+            adb shell input tap 540 600  # Coordinate Estimate 2
+            sleep 2
+            
+            echo "Attempting Auto-Click on Toggles..."
+            # Toggles are usually on the right side (X ~ 900)
+            adb shell input tap 950 850   # Toggle 1
+            adb shell input tap 950 1000  # Toggle 2
+            adb shell input tap 950 1150  # Toggle 3
+            adb shell input tap 950 1300  # Toggle 4
+            
+            echo "Force Starting Service via Intent (Backup Method)..."
+            # Try to start the service directly if clicking failed
+            adb shell am start-foreground-service -n com.rustdesk.rustdesk/com.rustdesk.rustdesk.MainService || true
             
             echo "=========================================================="
             echo "           RUSTDESK CREDENTIALS (ID & PASS)               "
