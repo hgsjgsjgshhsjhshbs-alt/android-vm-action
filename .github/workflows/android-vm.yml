@@ -26,6 +26,8 @@ jobs:
           echo "=================================================================================="
           sudo tailscale up --hostname=github-runner-android
           echo "Authenticated successfully!"
+          echo "TAILSCALE IP ADDRESS:"
+          tailscale ip -4
 
       - name: Install Socat
         run: sudo apt-get update && sudo apt-get install -y socat
