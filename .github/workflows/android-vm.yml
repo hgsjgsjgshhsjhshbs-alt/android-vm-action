@@ -93,25 +93,18 @@ jobs:
             echo "Enabling 'Pointer Location' (Visual Coordinates)..."
             adb shell settings put system pointer_location 1
             
-            echo "Installing Smart AutoClicker (Helper Tool)..."
-            curl -L -o autoclicker.apk "https://github.com/Nain57/Smart-AutoClicker/releases/download/v1.5.2/Smart.AutoClicker-v1.5.2.apk"
+            echo "Installing Smart AutoClicker (v3.4.0)..."
+            curl -L -o autoclicker.apk "https://github.com/Nain57/Smart-AutoClicker/releases/download/v3.4.0/smartautoclicker-fDroid-release.apk"
             adb install autoclicker.apk || echo "AutoClicker Install Failed"
             
             echo "=========================================================="
             echo "           CLIPBOARD MONITOR (COPY ID TO LOG)             "
             echo "=========================================================="
-            echo "Instructions:"
-            echo "1. Connect via RustDesk (if possible) or ADB."
-            echo "2. If you see the RustDesk ID, click the 'Copy' icon."
-            echo "3. The ID will appear below automatically within 10 seconds."
+            echo "INSTRUCTIONS:"
+            echo "1. Connect via Scrcpy."
+            echo "2. Open RustDesk > Click Copy Icon."
+            echo "3. Watch these logs for the ID below."
             echo "=========================================================="
             
             echo "Starting Clipboard Monitor Loop..."
-            while true; do
-              echo "Checking Clipboard..."
-              # Dump clipboard info
-              adb shell service call clipboard 1 || echo "Clipboard Read Error"
-              # Or try dumpsys if service call is messy
-              # adb shell dumpsys clipboard | grep "mPrimaryClip" || true
-              sleep 10
-            done
+            while true; do echo "Checking Clipboard..."; adb shell service call clipboard 1 || echo "Clipboard Error"; sleep 10; done
