@@ -71,6 +71,11 @@ jobs:
             echo "Waiting for device to come back online..."
             adb wait-for-device
             
+            echo "Installing Magisk App (APK)..."
+            # Explicitly install the app just in case rootAVD didn't
+            curl -L -o Magisk.apk "https://github.com/topjohnwu/Magisk/releases/download/v26.4/Magisk-v26.4.apk"
+            adb install Magisk.apk || echo "Magisk APK Install Failed"
+            
             echo "Enabling Root Access (ADB)..."
             adb root
             adb wait-for-device
