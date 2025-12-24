@@ -50,15 +50,8 @@ jobs:
             socat TCP-LISTEN:10000,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
             
             echo "----------------------------------------------------------"
-            echo "Installing AnyDesk (User Link)..."
-            # Using the direct link provided by the user
-            curl -L -o anydesk.apk "https://download.anydesk.com/anydesk.apk"
-            adb install anydesk.apk || echo "AnyDesk Install Failed"
-            
-            echo "Installing AnyDesk Control Plugin..."
-            curl -L -o anydesk_plugin.apk "https://download.anydesk.com/android/plugins/adcontrol-ad1.apk"
-            adb install anydesk_plugin.apk || echo "AnyDesk Plugin Install Failed"
-            
+            # AnyDesk Removed by User Request
+            echo "Skipping AnyDesk..."
             echo "Setup Complete. Device Ready."
             
             echo "=========================================================="
@@ -92,33 +85,33 @@ jobs:
             sleep 10
             
             echo "Attempting Auto-Click on 'Start Service'..."
-            # Assuming 1080x1920 Screen. "Start Service" is usually top-center.
-            # Tap Center-Top area
-            adb shell input tap 540 500  # Coordinate Estimate 1
-            adb shell input tap 540 600  # Coordinate Estimate 2
+            # Center-Top area
+            adb shell input tap 540 500
+            adb shell input tap 540 600
             sleep 2
             
-            echo "Attempting Auto-Click on Toggles..."
-            # Toggles are usually on the right side (X ~ 900)
-            adb shell input tap 950 850   # Toggle 1
-            adb shell input tap 950 1000  # Toggle 2
-            adb shell input tap 950 1150  # Toggle 3
-            adb shell input tap 950 1300  # Toggle 4
+            echo "Enabling 'Pointer Location' (Visual Coordinates)..."
+            adb shell settings put system pointer_location 1
             
-            echo "Force Starting Service via Intent (Backup Method)..."
-            # Try to start the service directly if clicking failed
-            adb shell am start-foreground-service -n com.rustdesk.rustdesk/com.rustdesk.rustdesk.MainService || true
+            echo "Installing Smart AutoClicker (Helper Tool)..."
+            curl -L -o autoclicker.apk "https://github.com/Nain57/Smart-AutoClicker/releases/download/v1.5.2/Smart.AutoClicker-v1.5.2.apk"
+            adb install autoclicker.apk || echo "AutoClicker Install Failed"
             
             echo "=========================================================="
-            echo "           RUSTDESK CREDENTIALS (ID & PASS)               "
+            echo "           CLIPBOARD MONITOR (COPY ID TO LOG)             "
             echo "=========================================================="
-            # Attempt to read ID from Flutter Shared Prefs
-            echo "Raw Config Dump (Look for 'id' and 'password'):"
-            adb shell cat /data/data/com.rustdesk.rustdesk/shared_prefs/FlutterSharedPreferences.xml || echo "Config file not found yet (App might be initializing)"
+            echo "Instructions:"
+            echo "1. Connect via RustDesk (if possible) or ADB."
+            echo "2. If you see the RustDesk ID, click the 'Copy' icon."
+            echo "3. The ID will appear below automatically within 10 seconds."
             echo "=========================================================="
             
-            echo "Device Ready. Running indefinitely to support RustDesk."
-            
-            # Keep alive for 6 hours (21600 seconds)
-            echo "Keeping system alive for USER usage..."
-            while true; do sleep 60; done
+            echo "Starting Clipboard Monitor Loop..."
+            while true; do
+              echo "Checking Clipboard..."
+              # Dump clipboard info
+              adb shell service call clipboard 1 || echo "Clipboard Read Error"
+              # Or try dumpsys if service call is messy
+              # adb shell dumpsys clipboard | grep "mPrimaryClip" || true
+              sleep 10
+            done
