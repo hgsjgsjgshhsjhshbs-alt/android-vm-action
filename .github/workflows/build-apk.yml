@@ -75,6 +75,10 @@ jobs:
            flutter pub get
            popd
            ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/macos/Runner/bridge_generated.h
+           
+           pushd flutter
+           flutter pub run build_runner build --delete-conflicting-outputs
+           popd
 
       - name: Install vcpkg dependencies
         run: |
