@@ -85,6 +85,27 @@ jobs:
             echo "Launching RustDesk..."
             adb shell monkey -p com.rustdesk.rustdesk 1 || true
             
+            echo "Waiting for RustDesk to generate ID..."
+            sleep 10
+            
+            echo "=========================================================="
+            echo "           RUSTDESK CONNECTION DETAILS                    "
+            echo "=========================================================="
+            # Extract ID from the config file (requires root/su)
+            # Path might vary, trying standard paths:
+            RD_ID=$(adb shell "cat /data/data/com.rustdesk.rustdesk/shared_prefs/com.rustdesk.rustdesk_preferences.xml 2>/dev/null | grep 'id' || echo 'ID_NOT_FOUND'")
+            
+            # Fallback: Check Logcat if file access fails
+            if [[ "$RD_ID" == *"ID_NOT_FOUND"* ]]; then
+               echo "Trying to fetch ID from Logcat..."
+               adb logcat -d | grep "ID:" | tail -n 5
+            else
+               echo "Raw Config Data: $RD_ID"
+            fi
+            
+            echo "Password (Fixed): 123123123"
+            echo "=========================================================="
+            
             echo "=========================================================="
             echo "           SETUP COMPLETE - MANUAL MODE                   "
             echo "=========================================================="
