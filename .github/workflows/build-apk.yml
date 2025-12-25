@@ -84,6 +84,8 @@ jobs:
            
            # 3. Generate Freezed Files (Inside flutter dir)
            pushd flutter
+           # (Manual Icon injected via git)
+           # Generate Freezed Files
            flutter pub run build_runner build --delete-conflicting-outputs
            popd
 
