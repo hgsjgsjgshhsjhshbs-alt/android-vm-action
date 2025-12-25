@@ -84,11 +84,16 @@ jobs:
           curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
           
           echo "Installing RustDesk..."
-          adb -s localhost:5555 install rustdesk.apk
+          adb -s localhost:5555 install -r rustdesk.apk
+          sleep 10
+          
+          echo "Verifying Installation..."
+          adb -s localhost:5555 shell pm list packages | grep rustdesk || (echo "RustDesk NOT INSTALLED! Retrying..." && adb -s localhost:5555 install -r rustdesk.apk)
+          sleep 5
           
           echo "Setting RustDesk as DEVICE OWNER (Silent Permissions)..."
           # This command grants full administrative control, bypassing permission prompts
-          adb -s localhost:5555 shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Method might need custom APK, trying classic permissions first..."
+          adb -s localhost:5555 shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Failed (Might be missing receiver in this version), continuing..."
           
           # Classic Permissions Backup (Just in case Device Owner fails on this ROM)
           adb -s localhost:5555 shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
