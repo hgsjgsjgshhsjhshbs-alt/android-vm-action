@@ -16,6 +16,11 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Install ADB
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y adb
+
       - name: Start Docker Android (Android 10 - Root Supported)
         # Using budtmo/docker-android with 'google_apis' image which allows native ADB ROOT
         run: |
