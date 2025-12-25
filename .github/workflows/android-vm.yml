@@ -113,7 +113,7 @@ jobs:
           adb -s localhost:5555 shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Setup Skipped (Not supported in this APK)"
           
           echo "Launching RustDesk..."
-          adb -s localhost:5555 shell monkey -p com.rustdesk.rustdesk 1
+          adb -s localhost:5555 shell monkey -p com.rustdesk.rustdesk 1 || true
 
       - name: Start Tailscale
         run: |
