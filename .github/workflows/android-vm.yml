@@ -42,6 +42,11 @@ jobs:
       - name: Wait for Device Boot
         timeout-minutes: 15
         run: |
+          echo "Resetting ADB..."
+          adb disconnect
+          adb kill-server
+          adb start-server
+          
           echo "Waiting for ADB connection..."
           # Loop until device is connected
           until adb connect localhost:5555; do
@@ -49,10 +54,14 @@ jobs:
             echo "Retrying connection..."
           done
           
-          echo "Device Connected. Waiting for Boot Complete..."
-          adb wait-for-device
-          while [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
-            ls -l
+          echo "Device Connected. Verification..."
+          adb devices -l
+          
+          echo "Waiting for Boot Complete..."
+          # Use -s localhost:5555 to avoid 'more than one device' error
+          adb -s localhost:5555 wait-for-device
+          while [ "$(adb -s localhost:5555 shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
+            echo "Booting..."
             sleep 5
           done
           echo "Boot Complete!"
@@ -60,11 +69,13 @@ jobs:
       - name: Enable Native Root
         run: |
           echo "Enabling ADB Root..."
-          adb root
-          adb connect localhost:5555
-          adb wait-for-device
+          adb -s localhost:5555 root
+          # ADB root restarts the daemon on device, we must reconnect
+          sleep 5
+          adb connect localhost:5555 || true
+          adb -s localhost:5555 wait-for-device
           echo "Root Access Verified:"
-          adb shell whoami
+          adb -s localhost:5555 shell whoami
 
       - name: Setup RustDesk (Device Owner Mode)
         run: |
