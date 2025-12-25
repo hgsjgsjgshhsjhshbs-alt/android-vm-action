@@ -1,14 +1,14 @@
-name: Android VM with Remote Access
+name: Android Container V2 (Docker + Native Root)
 
-on: 
+on:
   workflow_dispatch:
 
 jobs:
-  run-android:
+  run-container:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Enable KVM
         run: |
@@ -16,84 +16,89 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Install Tailscale
-        run: curl -fsSL https://tailscale.com/install.sh | sh
-
-      - name: Start Tailscale (Login Link will appear here)
+      - name: Start Docker Android (Android 10 - Root Supported)
+        # Using budtmo/docker-android with 'google_apis' image which allows native ADB ROOT
         run: |
-          echo "=================================================================================="
-          echo "PLEASE CLICK THE LINK BELOW TO AUTHENTICATE TAILSCALE:"
-          echo "=================================================================================="
-          sudo tailscale up --hostname=github-runner-android
-          echo "Authenticated successfully!"
+          echo "Pulling Docker Image..."
+          docker pull budtmo/docker-android:emulator_10.0
+          
+          echo "Starting Container..."
+          # Port 5555 forwarded to host for ADB
+          # EMULATOR_DEVICE: Samsung Galaxy S10
+          # SYS_IMG: google_apis (Critical for Root availability, 'playstore' images block root)
+          docker run -d -p 5555:5555 -p 6080:6080 \
+            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
+            -e WEB_VNC=true \
+            -e ADB_POLLING=true \
+            --device /dev/kvm \
+            --name android-container \
+            budtmo/docker-android:emulator_10.0
+            
+      - name: Wait for Device Boot
+        timeout-minutes: 15
+        run: |
+          echo "Waiting for ADB connection..."
+          # Loop until device is connected
+          until adb connect localhost:5555; do
+            sleep 5
+            echo "Retrying connection..."
+          done
+          
+          echo "Device Connected. Waiting for Boot Complete..."
+          adb wait-for-device
+          while [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
+            ls -l
+            sleep 5
+          done
+          echo "Boot Complete!"
+
+      - name: Enable Native Root
+        run: |
+          echo "Enabling ADB Root..."
+          adb root
+          adb connect localhost:5555
+          adb wait-for-device
+          echo "Root Access Verified:"
+          adb shell whoami
+
+      - name: Setup RustDesk (Device Owner Mode)
+        run: |
+          echo "Downloading RustDesk 1.4.4..."
+          # Using verified GitHub link from user (v1.4.4 for stability)
+          curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
+          
+          echo "Installing RustDesk..."
+          adb install rustdesk.apk
+          
+          echo "Setting RustDesk as DEVICE OWNER (Silent Permissions)..."
+          # This command grants full administrative control, bypassing permission prompts
+          # Note: We use the correct receiver path for RustDesk
+          adb shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Method might need custom APK, trying classic permissions first..."
+          
+          # Classic Permissions Backup (Just in case Device Owner fails on this ROM)
+          adb shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
+          adb shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
+          adb shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
+          adb shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
+          adb shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
+          
+          echo "Launching RustDesk..."
+          adb shell monkey -p com.rustdesk.rustdesk 1
+
+      - name: Start Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscale up --hostname=github-runner-android-container --authkey=${{ secrets.TAILSCALE_AUTHKEY }}
+          echo "Authenticated!"
           echo "TAILSCALE IP ADDRESS:"
           tailscale ip -4
 
-      - name: Install Socat
-        run: sudo apt-get update && sudo apt-get install -y socat
-
-      - name: Run Android Emulator and Expose via Tailscale
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          target: google_apis
-          arch: x86_64
-          profile: pixel_5
-          ram-size: 4096M
-          disk-size: 8000M
-          # Use swiftshader for better compatibility in headless
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          script: |
-            # Forward Host Port 10000 -> Emulator Port 5555
-            # We use 10000 because 5555 is already taken by the emulator process
-            echo "Starting Socat Port Forwarding..."
-            socat TCP-LISTEN:10000,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
-            
-            echo "----------------------------------------------------------"
-            # AnyDesk Removed by User Request
-            echo "Skipping AnyDesk..."
-            echo "Setup Complete. Device Ready."
-            
-            echo "=========================================================="
-            echo "Tailscale is active."
-            echo "You can check your Tailscale Admin Console for the IP of this runner."
-            echo "Or use the IP printed below:"
-            tailscale ip -4
-            echo "=========================================================="
-            
-            echo "Installing RustDesk (User Version 1.4.4)..."
-            curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
-            adb install rustdesk.apk || echo "RustDesk Install Failed"
-            
-            echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
-            # 1. Storage
-            adb shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
-            adb shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
-            # 2. Audio
-            adb shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
-            # 3. System Alert (Overlay)
-            adb shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
-            # 4. Screen Capture (Media Projection) - Critical
-            adb shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
-            
-            # Enable Accessibility for Input Control
-            adb shell settings put secure enabled_accessibility_services com.rustdesk.rustdesk/com.rustdesk.rustdesk.AccessibilityService
-            adb shell settings put secure accessibility_enabled 1
-            
-            echo "Launching RustDesk..."
-            adb shell monkey -p com.rustdesk.rustdesk 1 || true
-            
-            echo "=========================================================="
-            echo "           SETUP COMPLETE - MANUAL MODE                   "
-            echo "=========================================================="
-            echo "1. Connect via ADB / Scrcpy using the Tailscale IP above."
-            echo "2. Open RustDesk manually."
-            echo "3. Click 'Start Service' and grant permissions if asked."
-            echo "4. Copy the ID/Password yourself."
-            echo "=========================================================="
-            
-            # Keep alive for 6 hours (21600 seconds)
-            echo "Keeping system alive for USER usage..."
-            while true; do sleep 60; done
+      - name: Keep Alive (Manual Mode)
+        run: |
+          echo "=========================================================="
+          echo "           SETUP COMPLETE - CONTAINER MODE (V2)           "
+          echo "=========================================================="
+          echo "1. Connect via ADB / Scrcpy using the Tailscale IP above."
+          echo "2. Device: Docker Container (Android 10 / Rooted)."
+          echo "=========================================================="
+          while true; do sleep 60; done
