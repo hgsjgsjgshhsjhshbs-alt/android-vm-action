@@ -1,0 +1,23 @@
+@echo off
+color 0b
+title Android V2 Connector (Port 5555)
+
+echo ========================================================
+echo        Android V2 Container Connector (Port 5555)
+echo ========================================================
+echo Requirements:
+echo 1. Install Tailscale on your PC and Login.
+echo 2. Ensure this file is inside the 'scrcpy' folder.
+echo ========================================================
+
+set /p IP="Enter Tailscale IP: "
+
+echo Connecting to %IP%:5555...
+adb disconnect
+adb kill-server
+adb connect %IP%:5555
+
+echo Starting Optimized Scrcpy...
+:: Lower bitrate and res for better performance over WAN
+scrcpy -s %IP%:5555 --video-codec=h264 --max-size=1024 --max-fps=30
+pause
