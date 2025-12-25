@@ -84,22 +84,21 @@ jobs:
           curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
           
           echo "Installing RustDesk..."
-          adb install rustdesk.apk
+          adb -s localhost:5555 install rustdesk.apk
           
           echo "Setting RustDesk as DEVICE OWNER (Silent Permissions)..."
           # This command grants full administrative control, bypassing permission prompts
-          # Note: We use the correct receiver path for RustDesk
-          adb shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Method might need custom APK, trying classic permissions first..."
+          adb -s localhost:5555 shell dpm set-device-owner com.rustdesk.rustdesk/.receiver.DeviceOwnerReceiver || echo "Device Owner Method might need custom APK, trying classic permissions first..."
           
           # Classic Permissions Backup (Just in case Device Owner fails on this ROM)
-          adb shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
-          adb shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
-          adb shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
-          adb shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
-          adb shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
+          adb -s localhost:5555 shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
+          adb -s localhost:5555 shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
+          adb -s localhost:5555 shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
+          adb -s localhost:5555 shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
+          adb -s localhost:5555 shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
           
           echo "Launching RustDesk..."
-          adb shell monkey -p com.rustdesk.rustdesk 1
+          adb -s localhost:5555 shell monkey -p com.rustdesk.rustdesk 1
 
       - name: Start Tailscale
         run: |
