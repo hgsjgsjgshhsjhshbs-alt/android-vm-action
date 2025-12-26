@@ -46,6 +46,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
+            export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
             # Forward Host Port 10000 -> Emulator Port 5555
             # We use 10000 because 5555 is already taken by the emulator process
             echo "Starting Socat Port Forwarding..."
@@ -63,8 +64,12 @@ jobs:
             tailscale ip -4
             echo "=========================================================="
             
-            echo "Installing RustDesk (User Version 1.4.4)..."
-            curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
+            echo "Installing RustDesk (Custom Rooted Build)..."
+            # Download Artifact from successful run
+            gh run download 20523027266 -n rustdesk-custom-apk --dir ./custom-apk
+            unzip ./custom-apk/app-release.apk -d ./extracted_apk || mv ./custom-apk/app-release.apk ./rustdesk.apk
+            
+            # Installation
             adb install rustdesk.apk || echo "RustDesk Install Failed"
             
             echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
