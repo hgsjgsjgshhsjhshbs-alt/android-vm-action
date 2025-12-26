@@ -73,14 +73,12 @@ jobs:
             git clone https://github.com/NetrisTV/ws-scrcpy.git
             
             echo "Starting ws-scrcpy installation and server..."
-            # Using parentheses to run in a subshell ensures 'cd' applies to all commands
-            (
-              cd ws-scrcpy && \
-              npm install && \
-              npm run dist && \
-              echo "Starting server in background..." && \
-              nohup npm start > ../ws-scrcpy.log 2>&1 &
-            )
+            echo "Starting ws-scrcpy installation and server..."
+            # Verify directory exists
+            ls -F
+            
+            # Run commands in sequence without subshell parentheses to avoid syntax errors
+            cd ws-scrcpy && npm install && npm run dist && nohup npm start > ../ws-scrcpy.log 2>&1 &
             
             # Wait for server to start
             sleep 15
