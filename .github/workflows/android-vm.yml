@@ -34,8 +34,6 @@ jobs:
 
       - name: Run Android Emulator and Expose via Tailscale
         uses: reactivecircus/android-emulator-runner@v2
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           api-level: 31
           target: google_apis
@@ -98,14 +96,9 @@ jobs:
             echo "Device is ready and accessible."
             # ------------------------------------------------------------------
             
-            echo "=========================================================="
-            echo "           SETUP COMPLETE - MANUAL MODE                   "
-            echo "=========================================================="
-            echo "1. Connect via ADB / Scrcpy using the Tailscale IP above."
-            echo "2. Open RustDesk manually."
-            echo "3. Click 'Start Service' and grant permissions if asked."
-            echo "4. Copy the ID/Password yourself."
-            echo "=========================================================="
+            # Keep alive for 6 hours (21600 seconds)
+            echo "Keeping system alive for USER usage..."
+            while true; do sleep 60; done
             
             # Keep alive for 6 hours (21600 seconds)
             echo "Keeping system alive for USER usage..."
