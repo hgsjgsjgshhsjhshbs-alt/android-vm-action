@@ -68,10 +68,20 @@ jobs:
             echo "Installing RustDesk (Custom Rooted Build)..."
             # Download Artifact from successful run
             gh run download 20523027266 -n rustdesk-custom-apk --dir ./custom-apk
-            unzip ./custom-apk/app-release.apk -d ./extracted_apk || mv ./custom-apk/app-release.apk ./rustdesk.apk
+            
+            echo "Debugging: Listing downloaded files..."
+            ls -R ./custom-apk
+            
+            echo "Locating APK..."
+            find ./custom-apk -name "*.apk" -print0 | xargs -0 -I {} mv {} ./rustdesk.apk
             
             # Installation
-            adb install rustdesk.apk || echo "RustDesk Install Failed"
+            if [ -f "rustdesk.apk" ]; then
+              adb install rustdesk.apk || echo "RustDesk Install Failed"
+            else
+              echo "ERROR: rustdesk.apk not found after download!"
+              exit 1
+            fi
             
             echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
             # 1. Storage
