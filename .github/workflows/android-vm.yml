@@ -1,4 +1,4 @@
-name: Android VM with Remote Access
+name: Android VM (Custom APK)
 
 on: 
   workflow_dispatch:
