@@ -34,6 +34,8 @@ jobs:
 
       - name: Run Android Emulator and Expose via Tailscale
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           api-level: 31
           target: google_apis
@@ -46,7 +48,6 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            export GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
             # Forward Host Port 10000 -> Emulator Port 5555
             # We use 10000 because 5555 is already taken by the emulator process
             echo "Starting Socat Port Forwarding..."
