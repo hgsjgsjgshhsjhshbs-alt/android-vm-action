@@ -65,58 +65,38 @@ jobs:
             tailscale ip -4
             echo "=========================================================="
             
-            echo "Installing RustDesk (Custom Rooted Build)..."
-            # Download Artifact from successful run
-            gh run download 20523027266 -n rustdesk-custom-apk --dir ./custom-apk
+            # ------------------------------------------------------------------
+            # Plan C: Web Scrcpy (Browser Control)
+            # ------------------------------------------------------------------
+            echo "Setting up ws-scrcpy for Browser Control..."
             
-            echo "Debugging: Listing downloaded files..."
-            ls -R ./custom-apk
+            # Install Node.js dependencies
+            git clone https://github.com/NetrisTV/ws-scrcpy.git
+            cd ws-scrcpy
+            npm install
+            npm run dist
             
-            echo "Locating APK..."
-            find ./custom-apk -name "*.apk" -print0 | xargs -0 -I {} mv {} ./rustdesk.apk
+            # Start ws-scrcpy on port 8000
+            # We use `nohup` to keep it running in background
+            echo "Starting ws-scrcpy server..."
+            nohup npm start &
             
-            # Installation
-            # Installation (Simplified Logic)
-            ls -l rustdesk.apk && adb install rustdesk.apk || (echo "ERROR: APK NOT FOUND OR INSTALL FAILED" && exit 1)
-            
-            echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
-            # 1. Storage
-            adb shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
-            adb shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
-            # 2. Audio
-            adb shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
-            # 3. System Alert (Overlay)
-            adb shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
-            # 4. Screen Capture (Media Projection) - Critical
-            adb shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
-            
-            # Enable Accessibility for Input Control
-            adb shell settings put secure enabled_accessibility_services com.rustdesk.rustdesk/com.rustdesk.rustdesk.AccessibilityService
-            adb shell settings put secure accessibility_enabled 1
-            
-            echo "Launching RustDesk..."
-            adb shell monkey -p com.rustdesk.rustdesk 1 || true
-            
-            echo "Waiting for RustDesk to generate ID..."
+            # Wait for server to start
             sleep 10
             
             echo "=========================================================="
-            echo "           RUSTDESK CONNECTION DETAILS                    "
+            echo "           WEB ACCESS READY (PLAN C)                      "
             echo "=========================================================="
-            # Extract ID from the config file (requires root/su)
-            # Path might vary, trying standard paths:
-            RD_ID=$(adb shell "cat /data/data/com.rustdesk.rustdesk/shared_prefs/com.rustdesk.rustdesk_preferences.xml 2>/dev/null | grep 'id' || echo 'ID_NOT_FOUND'")
-            
-            # Fallback: Check Logcat if file access fails
-            if [[ "$RD_ID" == *"ID_NOT_FOUND"* ]]; then
-               echo "Trying to fetch ID from Logcat..."
-               adb logcat -d | grep "ID:" | tail -n 5
-            else
-               echo "Raw Config Data: $RD_ID"
-            fi
-            
-            echo "Password (Fixed): 123123123"
+            echo "1. Connect your phone using Tailscale."
+            echo "2. Open your browser and go to:"
+            echo "   http://$(tailscale ip -4):8000"
             echo "=========================================================="
+            
+            # Go back to root
+            cd ..
+            
+            echo "Device is ready and accessible."
+            # ------------------------------------------------------------------
             
             echo "=========================================================="
             echo "           SETUP COMPLETE - MANUAL MODE                   "
