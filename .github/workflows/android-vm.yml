@@ -76,12 +76,8 @@ jobs:
             find ./custom-apk -name "*.apk" -print0 | xargs -0 -I {} mv {} ./rustdesk.apk
             
             # Installation
-            if [ -f "rustdesk.apk" ]; then
-              adb install rustdesk.apk || echo "RustDesk Install Failed"
-            else
-              echo "ERROR: rustdesk.apk not found after download!"
-              exit 1
-            fi
+            # Installation (Simplified Logic)
+            ls -l rustdesk.apk && adb install rustdesk.apk || (echo "ERROR: APK NOT FOUND OR INSTALL FAILED" && exit 1)
             
             echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
             # 1. Storage
