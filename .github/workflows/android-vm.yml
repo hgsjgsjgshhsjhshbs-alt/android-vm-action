@@ -69,18 +69,24 @@ jobs:
             echo "Setting up ws-scrcpy for Browser Control..."
             
             # Install Node.js dependencies
+            # Install and Start ws-scrcpy (Chained to preserve directory context)
             git clone https://github.com/NetrisTV/ws-scrcpy.git
-            cd ws-scrcpy
-            npm install
-            npm run dist
             
-            # Start ws-scrcpy on port 8000
-            # We use `nohup` to keep it running in background
-            echo "Starting ws-scrcpy server..."
-            nohup npm start &
+            echo "Starting ws-scrcpy installation and server..."
+            # Using parentheses to run in a subshell ensures 'cd' applies to all commands
+            (
+              cd ws-scrcpy && \
+              npm install && \
+              npm run dist && \
+              echo "Starting server in background..." && \
+              nohup npm start > ../ws-scrcpy.log 2>&1 &
+            )
             
             # Wait for server to start
-            sleep 10
+            sleep 15
+            
+            echo "Checking background server status..."
+            cat ws-scrcpy.log || echo "Log file not created."
             
             echo "=========================================================="
             echo "           WEB ACCESS READY (PLAN C)                      "
