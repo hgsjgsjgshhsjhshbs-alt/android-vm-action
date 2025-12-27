@@ -96,12 +96,7 @@ jobs:
             # 1. Install & Build
             # 2. Find generated index.html in dist/ and inject CSS
             # 3. Start Server
-            cd ws-scrcpy && \
-            npm install && \
-            npm run dist && \
-            echo "Injecting CSS into generated build..." && \
-            find ./dist -name "index.html" -type f -exec sed -i "s|</head>|$CUSTOM_CSS</head>|" {} + && \
-            nohup npm start > ../ws-scrcpy.log 2>&1 &
+            cd ws-scrcpy && npm install && npm run dist && echo "Injecting CSS into generated build..." && find ./dist -name "index.html" -type f -exec sed -i "s|</head>|$CUSTOM_CSS</head>|" {} + && nohup npm start > ../ws-scrcpy.log 2>&1 &
             
             # Wait for server to start
             sleep 15
