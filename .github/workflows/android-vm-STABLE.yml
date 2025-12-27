@@ -1,4 +1,4 @@
-name: Android VM with Remote Access
+name: Android VM (Custom APK)
 
 on: 
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
           api-level: 31
           target: google_apis
           arch: x86_64
-          profile: pixel_5
+          profile: Nexus 4
           ram-size: 4096M
           disk-size: 8000M
           # Use swiftshader for better compatibility in headless
@@ -63,36 +63,41 @@ jobs:
             tailscale ip -4
             echo "=========================================================="
             
-            echo "Installing RustDesk (User Version 1.4.4)..."
-            curl -L -o rustdesk.apk "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-universal-signed.apk"
-            adb install rustdesk.apk || echo "RustDesk Install Failed"
+            # ------------------------------------------------------------------
+            # Plan C: Web Scrcpy (Browser Control)
+            # ------------------------------------------------------------------
+            echo "Setting up ws-scrcpy for Browser Control..."
             
-            echo "Granting RustDesk Permissions (Package: com.rustdesk.rustdesk)..."
-            # 1. Storage
-            adb shell pm grant com.rustdesk.rustdesk android.permission.WRITE_EXTERNAL_STORAGE || true
-            adb shell pm grant com.rustdesk.rustdesk android.permission.READ_EXTERNAL_STORAGE || true
-            # 2. Audio
-            adb shell pm grant com.rustdesk.rustdesk android.permission.RECORD_AUDIO || true
-            # 3. System Alert (Overlay)
-            adb shell appops set com.rustdesk.rustdesk SYSTEM_ALERT_WINDOW allow || true
-            # 4. Screen Capture (Media Projection) - Critical
-            adb shell appops set com.rustdesk.rustdesk PROJECT_MEDIA allow || true
+            # Install Node.js dependencies
+            # Install and Start ws-scrcpy (Chained to preserve directory context)
+            git clone https://github.com/NetrisTV/ws-scrcpy.git
             
-            # Enable Accessibility for Input Control
-            adb shell settings put secure enabled_accessibility_services com.rustdesk.rustdesk/com.rustdesk.rustdesk.AccessibilityService
-            adb shell settings put secure accessibility_enabled 1
+            echo "Starting ws-scrcpy installation and server..."
+            # Verify directory exists
+            ls -F
             
-            echo "Launching RustDesk..."
-            adb shell monkey -p com.rustdesk.rustdesk 1 || true
+            # Run commands in sequence without subshell parentheses to avoid syntax errors
+            cd ws-scrcpy && npm install && npm run dist && nohup npm start > ../ws-scrcpy.log 2>&1 &
+            
+            # Wait for server to start
+            sleep 15
+            
+            echo "Checking background server status..."
+            cat ws-scrcpy.log || echo "Log file not created."
             
             echo "=========================================================="
-            echo "           SETUP COMPLETE - MANUAL MODE                   "
+            echo "           WEB ACCESS READY (PLAN C)                      "
             echo "=========================================================="
-            echo "1. Connect via ADB / Scrcpy using the Tailscale IP above."
-            echo "2. Open RustDesk manually."
-            echo "3. Click 'Start Service' and grant permissions if asked."
-            echo "4. Copy the ID/Password yourself."
+            echo "1. Connect your phone using Tailscale."
+            echo "2. Open your browser and go to:"
+            echo "   http://$(tailscale ip -4):8000"
             echo "=========================================================="
+            
+            # Go back to root
+            cd ..
+            
+            echo "Device is ready and accessible."
+            # ------------------------------------------------------------------
             
             # Keep alive for 6 hours (21600 seconds)
             echo "Keeping system alive for USER usage..."

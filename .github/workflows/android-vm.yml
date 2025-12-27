@@ -73,12 +73,29 @@ jobs:
             git clone https://github.com/NetrisTV/ws-scrcpy.git
             
             echo "Starting ws-scrcpy installation and server..."
-            echo "Starting ws-scrcpy installation and server..."
-            # Verify directory exists
-            ls -F
             
-            # Run commands in sequence without subshell parentheses to avoid syntax errors
-            cd ws-scrcpy && npm install && npm run dist && nohup npm start > ../ws-scrcpy.log 2>&1 &
+            # ------------------------------------------------------------------
+            # CUSTOMIZATION: Inject Mobile-Friendly CSS
+            # ------------------------------------------------------------------
+            echo "Injecting Custom Mobile UI Styles..."
+            # Using a simplified CSS block to avoid sed parsing issues
+            # 1. Dark Theme & Centered Layout
+            # 2. Big Buttons for Links
+            # 3. Hide 'devtools', 'shell', 'proxy', 'files', 'tiny'
+            # 4. Highlight 'Configure' (Green) and 'H264 Converter' (Blue)
+            
+            CUSTOM_CSS="<style>body{background-color:#121212!important;color:#fff!important;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0}a{text-decoration:none;color:#fff!important;display:block;padding:20px;margin:10px;background:#333;border-radius:15px;font-size:1.2rem;text-align:center;width:85%;max-width:350px;box-shadow:0 4px 6px rgba(0,0,0,0.5);transition:transform 0.1s}a:active{transform:scale(0.98)}a[href*='devtools'],a[href*='shell'],a[href*='proxy'],a[href*='files'],a[href*='tiny']{display:none!important}a[href*='configure']{background:#28a745!important;font-weight:bold}a[href*='H264']{background:#007bff!important;font-weight:bold;font-size:1.4rem}h3,div{text-align:center;width:100%}.device-state{font-size:2rem;margin-bottom:20px}</style>"
+            
+            # Using sed to insert style before </head> in src/client/index.html
+            # We run this INSIDE the ws-scrcpy directory
+            # ------------------------------------------------------------------
+            
+            # Run commands in sequence
+            cd ws-scrcpy && \
+            sed -i "s|</head>|$CUSTOM_CSS</head>|" src/client/index.html && \
+            npm install && \
+            npm run dist && \
+            nohup npm start > ../ws-scrcpy.log 2>&1 &
             
             # Wait for server to start
             sleep 15
@@ -99,10 +116,6 @@ jobs:
             
             echo "Device is ready and accessible."
             # ------------------------------------------------------------------
-            
-            # Keep alive for 6 hours (21600 seconds)
-            echo "Keeping system alive for USER usage..."
-            while true; do sleep 60; done
             
             # Keep alive for 6 hours (21600 seconds)
             echo "Keeping system alive for USER usage..."
