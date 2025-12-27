@@ -90,8 +90,16 @@ jobs:
             # We run this INSIDE the ws-scrcpy directory
             # ------------------------------------------------------------------
             
-            # Run commands in sequence (Single line to prevent shell tokenizer errors)
-            cd ws-scrcpy && sed -i "s|</head>|$CUSTOM_CSS</head>|" src/client/index.html && npm install && npm run dist && nohup npm start > ../ws-scrcpy.log 2>&1 &
+            # Run commands sequentially with error handling
+            cd ws-scrcpy
+            
+            # Robust Styling: Find index.html anywhere and inject CSS (Fail-safe)
+            echo "Attempting to inject custom styles..."
+            find . -name "index.html" -type f -exec sed -i "s|</head>|$CUSTOM_CSS</head>|" {} + || echo "WARNING: Style injection failed, proceeding with default UI."
+            
+            # Start Server (Critical Path)
+            echo "Starting server..."
+            npm install && npm run dist && nohup npm start > ../ws-scrcpy.log 2>&1 &
             
             # Wait for server to start
             sleep 15
